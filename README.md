@@ -294,7 +294,7 @@ Apache License 2.0 - See [LICENSE](LICENSE) for details.
 
 ## Contact
 
-- Project Lead: Your Name
+- Project Lead: Binxu Wang
 - Email: 745974903@qq.com
 
 
