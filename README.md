@@ -282,19 +282,20 @@ python evaluation/scripts/reproduce_figure6.py
 ```bibtex
 @inproceedings{zhang2025ectc,
   title={ECTC: A Game-Theoretic Framework for Energy-Communication-Computation Coupled Optimization in Battery-Free Sensor Networks},
-  author={Zhang, Chong and Wang, Binxu and Jiayuan, Zhang and Sheng, He and others},
+  author={Zhang, Chong and Wang, Binxu and Zhang, Jiayuan and He, Sheng and others},
   booktitle={IEEE Transaction on Mobile Computing)},
   year={2025}
 }
 ```
 
 ## License
-
+ECTC: Energy-Communication-Computation Coupled Optimization
+This repository contains the complete implementation of the ECTC (Energy-Communication-Computation Coupled Optimization) framework for battery-free sensor networks, based on the research paper "ECTC: A Game-Theoretic Framework for Energy-Communication-Computation Coupled Optimization in Battery-Free Sensor Networks.
 Apache License 2.0 - See [LICENSE](LICENSE) for details.
 
 ## Contact
 
-- Project Lead: Binxu Wang
+- Project Lead: Zhang Chong, Wang Binxu
 - Email: 745974903@qq.com
 
 
