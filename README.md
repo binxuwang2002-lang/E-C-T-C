@@ -276,7 +276,24 @@ pytest tests/ -v
 ```bash
 python evaluation/scripts/reproduce_figure6.py
 ```
+## Authors
+Chong Zhang (Southwest Petroleum University)
 
+Binxu Wang (Southwest Petroleum University)
+
+Jiayuan Zhang (Northwest Minzu University)
+
+Sheng He (Southwest Petroleum University)
+
+Xiao Zhang (Southwest Petroleum University)
+
+Xiuying Dong (Southwest Petroleum University)
+
+Haifeng Li (Southwest Petroleum University)
+
+Xingjie Zeng (Southwest Petroleum University)
+ECTC: Energy-Communication-Computation Coupled Optimization
+This repository contains the complete implementation of the ECTC (Energy-Communication-Computation Coupled Optimization) framework for battery-free sensor networks, based on the research paper "ECTC: A Game-Theoretic Framework for Energy-Communication-Computation Coupled Optimization in Battery-Free Sensor Networks.
 ## Citation
 
 ```bibtex
@@ -289,8 +306,7 @@ python evaluation/scripts/reproduce_figure6.py
 ```
 
 ## License
-ECTC: Energy-Communication-Computation Coupled Optimization
-This repository contains the complete implementation of the ECTC (Energy-Communication-Computation Coupled Optimization) framework for battery-free sensor networks, based on the research paper "ECTC: A Game-Theoretic Framework for Energy-Communication-Computation Coupled Optimization in Battery-Free Sensor Networks.
+
 Apache License 2.0 - See [LICENSE](LICENSE) for details.
 
 ## Contact
