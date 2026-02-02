@@ -310,10 +310,6 @@ This repository contains the complete implementation of the ECTC (Energy-Communi
 
 Apache License 2.0 - See [LICENSE](LICENSE) for details.
 
-## Contact
-
-- Project Lead: Zhang Chong, Wang Binxu
-- Email: 745974903@qq.com
 
 
 ## Acknowledgments
