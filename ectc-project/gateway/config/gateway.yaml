@@ -1,0 +1,261 @@
+# ECTC Gateway Configuration
+gateway:
+  port: 8080
+  host: 0.0.0.0
+  log_level: INFO
+
+  # API settings
+  api:
+    version: v1
+    cors_enabled: true
+    rate_limit: 1000  # requests/minute
+
+  # Security
+  security:
+    enable_zk_proofs: true
+    require_commitments: true
+
+# Network configuration
+network:
+  protocol: IEEE_802_15_4
+  channel: 11  # 2.405 GHz
+  pan_id: 0x1234
+
+  # Timing parameters
+  slot_duration_ms: 100
+  superframe_slots: 10
+
+  # Node settings
+  max_nodes: 100
+  num_mobile: 10
+
+  # Radio parameters
+  tx_power_dbm: 5
+  rx_sensitivity_dbm: -98
+  max_retries: 3
+
+# Energy configuration
+energy:
+  source: solar  # or 'rf', 'vibration'
+
+  # Capacitor specifications
+  capacitor:
+    value: 100e-6  # Farads (100 μF)
+    voltage_max: 6.3  # Volts
+    vdd: 3.3  # Operating voltage
+
+  # BQ25570 settings
+  bq25570:
+    # Voltages in mV
+    vbat_uv: 2300    # Under-voltage
+    vbat_ok: 2500    # OK threshold
+    vbat_hys: 200    # Hysteresis
+    mppt_voltage: 2400  # MPPT setpoint (solar)
+    vstor_ok: 3300  # Storage OK
+    vstor_max: 4500  # Storage max
+    istor_limit: 100  # Current limit (mA)
+
+# Algorithm parameters
+algorithms:
+  # Truncated Lyapunov Game
+  lyapunov:
+    v: 50.0      # Tradeoff parameter
+    beta: 0.1    # Saturation penalty coefficient
+    c_cap: 330.0  # Capacitor energy max (μJ)
+
+    thresholds:
+      cap_full: 0.9    # 90% capacity considered "full"
+      energy_ok: 50.0  # Minimum energy for tasks (μJ)
+
+  # Stratified Shapley Values
+  shapley:
+    epsilon: 0.1    # Error bound (relative)
+    delta: 0.05     # Confidence parameter
+
+    sampling:
+      min_samples: 10
+      max_samples: 100
+      stratum_size: 8  # Nodes per stratum
+
+    convergence:
+      max_iterations: 100
+      tolerance: 1e-4
+
+    # Parallel computation
+    parallel: true
+    max_workers: 4
+
+  # TinyLSTM predictor
+  tinylstm:
+    model_path: models/tinylstm_int8.tflite
+
+    # Model configuration
+    input:
+      seq_len: 10
+      features: 1
+
+    model:
+      hidden_dim: 32
+      output_dim: 1
+      quantization: int8
+
+    # Inference parameters
+    inference:
+      energy_cost_uj: 23.1  # μJ per inference
+      accuracy_threshold: 0.85
+
+  # KF-GP hybrid model
+  kf_gp:
+    # Kalman Filter parameters
+    kf:
+      process_noise: 0.1
+      observation_noise: 0.5
+
+    # Gaussian Process parameters
+    gp:
+      kernel: rbf  # or 'cauchy'
+      length_scale: 15.0  # meters
+      signal_variance: 1.0
+
+      # Inducing points for sparse GP
+      inducing_points: 8  # M = log(N)
+
+    # Robust mode (energy scarcity)
+    robust_mode:
+      threshold: 0.3  # 30% of nodes below this
+      kernel: cauchy
+
+    # Switching
+    switching:
+      auto_enable: true
+      enable_threshold: 0.3
+
+# Data storage
+storage:
+  type: influxdb  # Options: influxdb, mongodb, sqlite
+
+  influxdb:
+    host: influxdb
+    port: 8086
+    database: ectc_data
+    username: ectc
+    password: ectc12345
+    # org: ectc
+    # token: ectc-admin-token-1234567890
+
+  retention:
+    raw_data: 7d   # Keep raw data for 7 days
+    aggregated: 30d  # Keep aggregates for 30 days
+
+# Monitoring and metrics
+monitoring:
+  enable_prometheus: true
+  prometheus_port: 9090
+
+  metrics:
+    - name: ectc_node_energy
+      type: gauge
+      description: Node energy level in μJ
+
+    - name: ectc_data_integrity
+      type: gauge
+      description: Data integrity percentage
+
+    - name: ectc_shapley_error
+      type: gauge
+      description: Shapley approximation error
+
+    - name: ectc_energy_harvest
+      type: gauge
+      description: Energy harvesting rate
+
+    - name: ectc_energy_waste
+      type: counter
+      description: Energy waste from overflow
+
+    - name: ectc_task_success_rate
+      type: gauge
+      description: Task success rate
+
+# Logging configuration
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR
+  file: logs/gateway.log
+  max_size: 100MB
+  backup_count: 5
+
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+  # Console logging
+  console: true
+
+# Real-time updates
+websocket:
+  enabled: true
+  port: 8080
+  max_connections: 100
+  ping_interval: 30
+  ping_timeout: 10
+
+  topics:
+    - node_updates
+    - energy_metrics
+    - shapley_values
+    - alerts
+
+# Alerts and notifications
+alerts:
+  enabled: true
+
+  # Low energy alert
+  low_energy:
+    threshold_uj: 50.0
+    cooldown_seconds: 300
+
+  # High packet error rate
+  high_per:
+    threshold: 0.2
+    cooldown_seconds: 60
+
+  # Node offline
+  node_offline:
+    timeout_seconds: 300
+    cooldown_seconds: 60
+
+  # Shapley not converging
+  shapley_not_converging:
+    max_wait_seconds: 300
+
+# Performance tuning
+performance:
+  # Caching
+  cache_size: 1000
+  cache_ttl: 300  # seconds
+
+  # Batch processing
+  batch_size: 32
+  batch_timeout: 1.0  # seconds
+
+  # Connection pooling
+  max_connections: 100
+  connection_timeout: 10  # seconds
+
+# Development settings
+development:
+  debug: false
+  auto_reload: false
+  profiling: false
+
+# Experimental features
+experimental:
+  # Distributed Shapley computation
+  distributed_shapley: false
+  shard_size: 10
+
+  # Machine learning model updates
+  online_learning: false
+  learning_rate: 0.001
+
+  # Advanced routing
+  multi_path_routing: false
+  max_paths: 3

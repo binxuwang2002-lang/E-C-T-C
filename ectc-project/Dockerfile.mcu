@@ -1,0 +1,38 @@
+FROM ubuntu:20.04
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    gcc-arm-none-eabi \
+    gcc \
+    g++ \
+    make \
+    cmake \
+    git \
+    wget \
+    unzip \
+    python3 \
+    python3-pip \
+    python3-venv \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install TI SDK
+ARG TI_SDK_VERSION=5.30.00.00
+WORKDIR /opt/ti
+RUN wget -q https://www.ti.com/tool/download/SIMPLELINK-CC13X2-26X2-SDK/${TI_SDK_VERSION} && \
+    tar -xzf simplelink_cc13x2_26x2_sdk_${TI_SDK_VERSION}_linux_installer.run && \
+    ./simplelink_cc13x2_26x2_sdk_${TI_SDK_VERSION}_linux_installer.run --mode unattended
+
+# Set environment variables
+ENV TI_SDK_PATH=/opt/ti/simplelink_cc13x2_26x2_sdk_${TI_SDK_VERSION}
+ENV PATH=${TI_SDK_PATH}/tools/bin:${PATH}
+
+# ARM GCC is pre-installed in this image
+ENV ARM_GCC_PATH=/usr
+ENV PATH=${ARM_GCC_PATH}/bin:${PATH}
+
+WORKDIR /workspace
+COPY . .
+
+# Default command
+CMD ["/bin/bash"]

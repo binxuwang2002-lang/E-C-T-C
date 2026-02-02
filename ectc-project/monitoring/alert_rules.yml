@@ -1,0 +1,60 @@
+"""
+alert_rules.yml - Prometheus Alert Rules for ECTC
+"""
+
+groups:
+  - name: ectc_alerts
+    rules:
+      - alert: NodeLowEnergy
+        expr: ectc_node_energy_uj < 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Node {{ $labels.node_id }} has low energy"
+          description: "Node {{ $labels.node_id }} energy is {{ $value }} μJ (threshold: 50 μJ)"
+
+      - alert: NodeOffline
+        expr: time() - ectc_node_last_seen_seconds > 300
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node {{ $labels.node_id }} is offline"
+          description: "Node {{ $labels.node_id }} last seen {{ $value }} seconds ago"
+
+      - alert: ShapleyNotConverged
+        expr: ectc_shapley_error > 0.1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Shapley values not converging"
+          description: "Shapley approximation error is {{ $value }} (threshold: 0.1)"
+
+      - alert: HighPacketErrorRate
+        expr: ectc_packet_error_rate > 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High packet error rate"
+          description: "Packet error rate is {{ $value }} (threshold: 0.2)"
+
+      - alert: GatewayHighMemory
+        expr: ectc_gateway_memory_usage_mb > 1024
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Gateway high memory usage"
+          description: "Gateway memory usage is {{ $value }} MB (threshold: 1024 MB)"
+
+      - alert: EnergyWasteHigh
+        expr: rate(ectc_energy_waste_total[5m]) > 10
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+          summary: "High energy waste detected"
+          description: "Energy waste rate is {{ $value }} μJ/s (threshold: 10 μJ/s)"

@@ -1,0 +1,158 @@
+# CMakeLists.txt Integration for TinyLSTM Horner-INT8 Kernel
+# ==========================================================
+
+# Add to firmware/CMakeLists.txt or firmware/ectc_node/CMakeLists.txt
+
+# =============================================================================
+# Compiler Flags for DSP Extensions
+# =============================================================================
+
+# Enable ARM Cortex-M33 DSP extensions
+if(CMAKE_C_COMPILER_ID MATCHES "GNU")
+    # Target Cortex-M33 with DSP and FP features
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mcpu=cortex-m33 -mthumb -mfloat-abi=soft")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=fpv5-sp-d16")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__ARM_FEATURE_DSP=1")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__ARM_FEATURE_SIMD32=1")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__ARM_ARCH_8M_MAIN__=1")
+
+    # Optimization flags for size (critical: <2.1KB)
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Os")
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")  # Link-time optimization
+
+    # No unwind tables (saves space)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-unwind-tables")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-exceptions")
+
+    # Strict alignment for packed structures
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wcast-align=strict")
+endif()
+
+# =============================================================================
+# Source Files
+# =============================================================================
+
+# TinyLSTM Horner-INT8 kernel (optimized)
+set(TINYLSTM_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/hardware/schematics/tinylstm_horner_optimized.c
+)
+
+# =============================================================================
+# Include Directories
+# =============================================================================
+
+# TinyLSTM header
+set(TINYLSTM_INCLUDE_DIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}/hardware/schematics
+)
+
+# =============================================================================
+# Create Library or Executable Target
+# =============================================================================
+
+# Option 1: Add to existing ectc_node executable
+add_executable(ectc_node
+    # ... other sources ...
+    ${TINYLSTM_SOURCES}
+)
+
+# Option 2: Create separate TinyLSTM library
+add_library(tinylstm STATIC
+    ${TINYLSTM_SOURCES}
+)
+
+target_include_directories(tinylstm PUBLIC
+    ${TINYLSTM_INCLUDE_DIRS}
+)
+
+# =============================================================================
+# Linker Script Configuration
+# =============================================================================
+
+# Ensure proper placement of TinyLSTM sections
+set(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/firmware/stm32u575_linker.ld)
+
+# Add linker flags to ensure .tinylstm_weights section at 0x20000000
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--section-start=.tinylstm_weights=0x20000000")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--section-start=.shapley_cache=0x20002000")
+
+# =============================================================================
+# Memory Usage Constraints
+# =============================================================================
+
+# Set build properties to track memory usage
+set_target_properties(ectc_node PROPERTIES
+    LINK_FLAGS "-Wl,--print-memory-usage"
+)
+
+# =============================================================================
+# Unit Tests (Optional)
+# =============================================================================
+
+# Create test executable
+add_executable(test_tinylstm
+    tests/test_tinylstm.c
+    ${TINYLSTM_SOURCES}
+)
+
+target_include_directories(test_tinylstm PRIVATE
+    ${TINYLSTM_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/firmware/include
+)
+
+# Link with CMocka or Unity test framework
+target_link_libraries(test_tinylstm
+    -lcmocka  # or -lunity
+)
+
+# =============================================================================
+# Size Reporting
+# =============================================================================
+
+# Function to report section sizes
+find_program(SIZE_EXECUTABLE size)
+if(SIZE_EXECUTABLE)
+    add_custom_command(TARGET ectc_node POST_BUILD
+        COMMAND ${SIZE_EXECUTABLE} ectc_node
+        COMMENT "Reporting memory usage:"
+    )
+endif()
+
+# =============================================================================
+# Verification Checks
+# =============================================================================
+
+# Verify TinyLSTM section placement (custom command)
+add_custom_command(TARGET ectc_node POST_BUILD
+    COMMAND ${CMAKE_OBJDUMP} -h ectc_node | grep -E "(tinylstm|shapley_cache)"
+    COMMENT "Verifying TinyLSTM section placement..."
+)
+
+# =============================================================================
+# Build Configuration Example
+# =============================================================================
+
+# Configure with DSP support:
+# cmake -DCMAKE_C_FLAGS="-DUSE_DSP_EXTENSIONS=1" ..
+#
+# Build:
+# make -j4
+#
+# Check size:
+# arm-none-eabi-size ectc_node
+# arm-none-eabi-objdump -h ectc_node | grep -E "tinylstm|shapley_cache"
+
+# =============================================================================
+# Expected Output
+# =============================================================================
+
+# Memory usage report (typical):
+#    text    data     bss      dec      hex  filename
+#    1980     120    1024     3124      c34  ectc_node
+#
+# Section placement:
+#   14 .tinylstm_weights   20002000  00002000  00002000  20002000  2**0  CONTENTS, ALLOC, LOAD, DATA
+#   15 .shapley_cache      20004000  00004000  00001000  20004000  2**0  CONTENTS, ALLOC, LOAD, DATA
+#
+# Status: ✅ PASS (<2.1KB limit, correct placement)

@@ -1,0 +1,116 @@
+/*
+ * BQ25570 Test Circuit SPICE Model
+ * =================================
+ *
+ * Complete SPICE model of BQ25570 energy harvesting circuit.
+ * Includes MPPT, charge control, and protection circuits.
+ */
+
+* Title: BQ25570 Energy Harvesting PMIC
+* Input: 0.8-3.2V (Solar/RF)
+* Output: 3.3V @ 100mA max
+* Efficiency: >85%
+
+* Supply voltages
+VIN VIN_GND DC 2.4V    * Solar panel input
+VSTOR STOR_GND DC 0V    * Storage capacitor node
+VCAP STOR_GND DC 0V     * Capacitor voltage
+VBAT BAT_GND DC 0V      * Battery (if connected)
+VGND GND 0 DC 0V         * Ground reference
+
+* Input voltage sense
+RIN VIN VIN_GND 1k
+VIN_SENSE VIN VIN_SENSE 0
+
+* Maximum Power Point Tracking (MPPT)
+* Track Voc * 0.71 (assuming 71% of Voc)
+RMP1 VIN_SENSE MP1 100k
+RMP2 MP1 MP2 71k
+RMP3 MP2 MP1 29k    * Adjustable voltage divider
+CMP MP1 GND 10p
+
+* Reference voltage (bandgap, 1.21V typical)
+VBG MP1 GNN DC 1.21V
+
+* MPPT control loop (simplified)
+* Compares Voc/2 to reference
+EOMP MP_CTRL VIN_SENSE VIN_GND TABLE {1.21} = {0.5}
+
+* Duty cycle control
+RDC1 MP_CTRL OOK 100k
+CDC OOK GND 1p
+VOK OOK GND 0
+
+* Boost converter
+* Input stage
+LIN STOR_L STOR_GND L='10uH' R='0.1'
+DIN STOR_L OOK_D 0.3 D='2*sqrt(2*LIN*IIN/0.8)' AREA=1
+
+* Switch node
+C_SWITCH OOK_D GND 100p
+
+* Output rectifier
+DRECT OOK_D STOR_L D='1/0.7' M=1
+CSTORE STOR STOR_GND C='100uF'
+
+* Output voltage regulation
+* Target: 3.3V (always-on LDO)
+VFB STOR GND DC 1.8V
+RFB1 STOR FB 200k
+RFB2 FB GND 120k
+
+* Error amplifier
+* Simplified: proportional control
+EA_CTRL FB VFB GAIN='10' LIMIT='2.5 0'
+
+* Gate driver
+* Converts EA output to PWM for boost converter
+VDUTY EA_CTRL DUTY GAIN='1' LIMIT='0 0.9'
+
+* Load (simulated)
+ILOAD STOR GND R='100'
+
+* Protection circuits
+* Over-voltage protection (4.5V)
+VOVP_REF OVP_REF GND DC 0.6V
+R_OVP1 STOR OVP1 100k
+R_OVP2 OVP1 GND 13.3k    * Triggers at ~4.5V
+COM_OVP OVP1 OVP_REF OVP_CTRL 'GAIN=100'
+
+* Under-voltage protection (2.5V)
+VUVP_REF UVP_REF GND DC 0.6V
+R_UVP1 STOR UVP1 100k
+R_UVP2 UVP1 GND 31k      * Triggers at ~2.5V
+COM_UVP UVP1 UVP_REF UVP_CTRL 'GAIN=100'
+
+* Thermal protection (simplified)
+* Tj > 125°C
+VTHERM THERM_IN GND DC '27/1000'   * 27mV at 27°C
+R_THERM THERM_IN GND 1k
+* Would need thermal model for complete simulation
+
+* Cold start circuit
+* Needed when VSTOR < 1.8V
+* Simplified: assume cold-start capable
+
+* Measurement points
+.IC V(STOR) = 0
+.IC V(VCAP) = 0
+
+* Analysis
+.control
+* Slow ramp up of solar input
+sweep vin 0 3.2 0.1
+plot V(VIN) V(STOR) V(VCAP) I(VLOAD)
+.endc
+
+* Model library (simplified)
+.model d= d
+.model l= l
+.model c= c
+
+.subckt buffer in out vdd vss
+E1 out vss in vss gain=5 limit='vdd vss'
+.ends buffer
+
+.ends

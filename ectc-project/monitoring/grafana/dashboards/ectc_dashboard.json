@@ -1,0 +1,111 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "ECTC Network Monitor",
+    "tags": ["ectc", "sensor-network", "battery-free"],
+    "style": "dark",
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Node Energy Levels",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "ectc_node_energy_uj",
+            "legendFormat": "Node {{node_id}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "μJ",
+            "min": 0,
+            "max": 330
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Network Data Integrity",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "ectc_data_integrity",
+            "legendFormat": "Data Integrity"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Energy Harvesting",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(ectc_energy_harvest_total[5m])",
+            "legendFormat": "Harvest Rate"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Shapley Value Convergence",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "ectc_shapley_error",
+            "legendFormat": "Approximation Error"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Active Nodes",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "count(ectc_node_energy_uj)",
+            "legendFormat": "Active Nodes"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Packet Error Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "ectc_packet_error_rate",
+            "legendFormat": "PER"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Energy Waste",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(ectc_energy_waste_total[5m])",
+            "legendFormat": "Waste Rate"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Task Success Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "ectc_task_success_rate",
+            "legendFormat": "Success Rate"
+          }
+        ]
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "5s"
+  }
+}

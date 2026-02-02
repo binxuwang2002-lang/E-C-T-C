@@ -1,0 +1,123 @@
+version: '3.8'
+
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    container_name: ectc-gateway
+    ports:
+      - "8080:8080"
+      - "9090:9090"  # Prometheus metrics
+    volumes:
+      - ./config:/app/config:ro
+      - ./gateway/ectc_gateway/models:/app/models:ro
+      - ./logs:/app/logs
+      - ./data:/app/data
+    environment:
+      - ECTC_LOG_LEVEL=INFO
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    depends_on:
+      - influxdb
+    networks:
+      - ectc-net
+
+  influxdb:
+    image: influxdb:2.0
+    container_name: ectc-influxdb
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+      - ./config/influxdb:/etc/influxdb2:ro
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=ectc
+      - DOCKER_INFLUXDB_INIT_PASSWORD=ectc12345
+      - DOCKER_INFLUXDB_INIT_ORG=ectc
+      - DOCKER_INFLUXDB_INIT_BUCKET=ectc_data
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=ectc-admin-token-1234567890
+    restart: unless-stopped
+    networks:
+      - ectc-net
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ectc-prometheus
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    restart: unless-stopped
+    networks:
+      - ectc-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ectc-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=ectc123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    restart: unless-stopped
+    networks:
+      - ectc-net
+    depends_on:
+      - prometheus
+
+  node-simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    container_name: ectc-node-sim
+    command: python -m simulation.simulator --nodes 50 --duration 3600
+    volumes:
+      - ./simulation:/app/simulation:ro
+      - ./evaluation/traces:/app/traces:ro
+      - ./logs:/app/logs
+    environment:
+      - ECTC_NUM_NODES=50
+      - ECTC_SIMULATION_MODE=true
+    restart: "no"
+    networks:
+      - ectc-net
+
+  # Optional: Web dashboard for monitoring
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    container_name: ectc-dashboard
+    ports:
+      - "5000:5000"
+    environment:
+      - INFLUXDB_HOST=influxdb
+      - INFLUXDB_PORT=8086
+      - GRAFANA_HOST=grafana
+      - GRAFANA_PORT=3000
+    networks:
+      - ectc-net
+    depends_on:
+      - influxdb
+      - grafana
+
+networks:
+  ectc-net:
+    driver: bridge
+
+volumes:
+  influxdb-data:
+  prometheus-data:
+  grafana-data:

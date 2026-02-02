@@ -1,0 +1,93 @@
+# ECTC Example Configuration
+# This file demonstrates all available configuration options
+
+# Gateway server settings
+server:
+  port: 8080
+  host: "0.0.0.0"
+  workers: 4
+  timeout: 30
+
+# Database settings
+database:
+  type: "influxdb"  # influxdb, sqlite, mongodb
+  host: "localhost"
+  port: 8086
+  name: "ectc_db"
+  user: "ectc"
+  password: "ectc123"
+
+# Logging configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  file: "logs/ectc.log"
+  max_size: "100MB"
+  backup_count: 5
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Network settings
+network:
+  protocol: "IEEE_802_15_4"
+  channel: 11
+  pan_id: 0x1234
+  max_nodes: 100
+  slot_duration_ms: 100
+
+# Energy settings
+energy:
+  source: "solar"  # solar, rf, vibration
+  capacitor:
+    value: 100e-6  # F
+    voltage_max: 6.3  # V
+  harvesting:
+    mppt_enabled: true
+    mppt_voltage: 2.4  # V
+
+# Algorithm settings
+algorithms:
+  lyapunov:
+    v: 50.0
+    beta: 0.1
+    c_cap: 330.0
+
+  shapley:
+    epsilon: 0.1
+    delta: 0.05
+    parallel: true
+
+  lstm:
+    model_path: "models/tinylstm.pkl"
+    hidden_dim: 32
+    quantization: "int8"
+
+  kf_gp:
+    kernel: "rbf"  # rbf, cauchy
+    length_scale: 15.0
+    inducing_points: 8
+
+# Monitoring settings
+monitoring:
+  prometheus:
+    enabled: true
+    port: 9090
+
+  grafana:
+    enabled: true
+    port: 3000
+
+  alerts:
+    enabled: true
+    email: "admin@example.com"
+
+# Security settings
+security:
+  enable_tls: false
+  cert_file: "certs/server.crt"
+  key_file: "certs/server.key"
+  require_auth: false
+
+# Experimental features
+experimental:
+  distributed_computing: false
+  machine_learning: true
+  blockchain: false

@@ -1,0 +1,184 @@
+version: 2
+
+jobs:
+  build-mcu:
+    docker:
+      - image: ubuntu:20.04
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install dependencies
+          command: |
+            apt-get update
+            apt-get install -y build-essential wget unzip
+
+      - run:
+          name: Install ARM GCC
+          command: |
+            cd /tmp
+            wget -q https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.10/gcc-arm-none-eabi-10.3-2021.10-x86_64-linux.tar.bz2
+            tar -xjf gcc-arm-none-eabi-10.3-2021.10-x86_64-linux.tar.bz2
+            echo 'export PATH=/tmp/gcc-arm-none-eabi-10.3-2021.10/bin:$PATH' >> $BASH_ENV
+
+      - run:
+          name: Install TI SDK
+          command: |
+            # SDK requires manual download
+            echo "TI SDK must be downloaded manually"
+
+      - run:
+          name: Build MCU firmware
+          command: |
+            export PATH=/tmp/gcc-arm-none-eabi-10.3-2021.10/bin:$PATH
+            cd firmware
+            ./build.sh
+
+      - run:
+          name: Check binary size
+          command: |
+            cd firmware/build/cc2650
+            arm-none-eabi-size ectc_node.axf
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - firmware/build/cc2650/ectc_node.bin
+
+  build-gateway:
+    docker:
+      - image: python:3.8
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install Python dependencies
+          command: |
+            pip install -r gateway/requirements.txt
+            pip install pytest pytest-cov
+
+      - run:
+          name: Install ECTC gateway
+          command: |
+            cd gateway
+            pip install -e .
+
+      - run:
+          name: Run Python tests
+          command: |
+            pytest tests/ -v --cov=ectc_gateway
+
+      - run:
+          name: Build Python package
+          command: |
+            cd gateway
+            python setup.py sdist bdist_wheel
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - gateway/dist/
+
+  build-docs:
+    docker:
+      - image: python:3.8
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install Sphinx
+          command: |
+            pip install sphinx sphinx-rtd-theme
+
+      - run:
+          name: Build documentation
+          command: |
+            cd docs
+            make html
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - docs/build/html/
+
+  test-simulation:
+    docker:
+      - image: python:3.8
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install dependencies
+          command: |
+            pip install numpy scipy scikit-learn matplotlib seaborn
+
+      - run:
+          name: Run simulation tests
+          command: |
+            cd simulation
+            python -m pytest tests/ -v
+
+      - run:
+          name: Generate test plots
+          command: |
+            python simulation/simulator.py --test-mode
+
+  deploy:
+    docker:
+      - image: python:3.8
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install deployment tools
+          command: |
+            pip install -r gateway/requirements.txt
+            pip install docker fabric
+
+      - run:
+          name: Deploy to staging
+          command: |
+            echo "Deploy to staging environment"
+            # fab staging deploy
+
+      - run:
+          name: Run smoke tests
+          command: |
+            python scripts/smoke_tests.py
+
+workflows:
+  version: 2
+
+  build-and-test:
+    jobs:
+      - build-mcu
+      - build-gateway
+      - build-docs
+      - test-simulation
+
+      - deploy:
+          requires:
+            - build-mcu
+            - build-gateway
+            - build-docs
+            - test-simulation
+          filters:
+            branches:
+              only: main
+
+  nightly:
+    jobs:
+      - build-mcu
+      - build-gateway
+      - test-simulation
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"  # Daily at midnight
+          filters:
+            branches:
+              only: main
