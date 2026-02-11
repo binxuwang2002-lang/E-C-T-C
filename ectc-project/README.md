@@ -304,8 +304,14 @@ Apache License 2.0 - See [LICENSE](LICENSE) for details.
 
 ## Contact
 
-- Project Lead: Your Name
-- Email: 745974903@qq.com
+- **Email**: 745974903@qq.com
+
+## Authors
+
+- Chong Zhang, Binxu Wang, Sheng He, Xiao Zhang, Xiuying Dong, Haifeng Li, Xingjie Zeng\* — Southwest Petroleum University (SWPU), Chengdu, China
+- Jiayuan Zhang — Northwest Minzu University, Lanzhou, China
+
+
 
 
 ## Acknowledgments

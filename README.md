@@ -456,11 +456,11 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 ## 📖 Citation
 
 ```bibtex
-@inproceedings{zhang2024ectc,
+@inproceedings{zhang2025ectc,
   title={ECTC: A Game-Theoretic Framework for Energy-Communication-Computation Coupled Optimization in Battery-Free Sensor Networks},
   author={Zhang, Chong and Wang, Binxu and Chen, Yifei and Li, Ming and others},
-  booktitle={IEEE International Conference on Embedded and Real-Time Computing Systems and Applications (RTCSA)},
-  year={2024}
+  booktitle={IEEE Transaction on Mobile Computing},
+  year={2025}
 }
 ```
 
@@ -482,9 +482,14 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/your-org/ectc-project/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/ectc-project/discussions)
-- **Email**: your.email@example.com
+- **Email**: 745974903@qq.com
+
+## ✍️ Authors
+
+- Chong Zhang, Binxu Wang, Sheng He, Xiao Zhang, Xiuying Dong, Haifeng Li, Xingjie Zeng\* — Southwest Petroleum University (SWPU), Chengdu, China
+- Jiayuan Zhang — Northwest Minzu University, Lanzhou, China
+
+
 
 ## 🙏 Acknowledgments
 
