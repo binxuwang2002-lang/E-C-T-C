@@ -78,6 +78,29 @@ class FEMPParameters:
     
     # Temperature compensation (optional)
     temp_coefficient: float = 0.004 # 0.4% per °C deviation from 25°C
+
+    @classmethod
+    def for_cc2650(cls):
+        """Standard profile for TI CC2650 (ARM Cortex-M3)"""
+        return cls(
+            C_bus=12.3e-12,   # 12.3 pF
+            I_leak=12.5e-9,   # 12.5 nA
+            f_clk=48e6,
+            alpha_compute=0.25
+        )
+
+    @classmethod
+    def for_stm32u575(cls):
+        """
+        Standard profile for STM32U575 (ARM Cortex-M33)
+        Reference: ECTC Paper Table II
+        """
+        return cls(
+            C_bus=20.0e-12,   # 20.0 pF (Higher parasitic capacitance)
+            I_leak=150e-9,    # 150 nA (Higher deep sleep leakage)
+            f_clk=160e6,      # 160 MHz
+            alpha_compute=0.18 # More efficient per cycle, but higher leakage
+        )
     reference_temp: float = 25.0    # Reference temperature in °C
 
 

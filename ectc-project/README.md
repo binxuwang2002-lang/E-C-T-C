@@ -95,8 +95,14 @@ python scripts/reproduce_table1.py
 
 - **evaluation/**: Benchmarks and test scripts
   - 30-day energy traces (sunny/cloudy/occluded)
-  - Baseline implementations (BATDMA, Mementos, etc.)
+  - Baseline implementations (BATDMA, Mementos, Quetzal-BFSN, DINO-BFSN, etc.)
+  - Table V reproduction script
   - Automated test suite
+
+- **tools/**: Parameter identification and calibration
+  - `fallback_cbus_identification.py`: No-EDA C_bus extraction (Paper V-C.1)
+  - `energy_calibration.py`: Energy model calibration
+  - `bq25570_calculator.py`: PMIC configuration
 
 - **hardware/**: Hardware design files
   - KiCad schematics and PCB layouts
@@ -141,6 +147,89 @@ Robust data recovery under energy scarcity:
 - Gaussian Process for spatial correlation
 - Automatic switching to Cauchy kernel when Q_E < 0.3 * C_cap
 
+### 5. FEMP 2.0 Energy Model
+
+Physics-grounded energy model with parasitic parameters (Paper Section V-C):
+
+```python
+from simulation.energy_model import FEMPEnergyModel, TaskType
+
+model = FEMPEnergyModel()
+energy = model.predict_task_energy(TaskType.TRANSMIT, duration_ms=2.0)
+```
+
+> **CRITICAL**: Ignoring C_bus (bus parasitic capacitance) causes **4.6× energy estimation error**.
+
+### 6. Online Drift Compensation
+
+Real-time leakage current estimation (Equation 10):
+
+```c
+// Before Deep Sleep
+DriftComp_PreSleep_Record();
+// [MCU sleeps]
+// After wakeup
+DriftComp_PostWake_Record();
+float new_leakage = Update_Leakage_Estimate();
+```
+
+## Hardware Support
+
+### Supported MCUs
+
+| MCU | Core | Status | Power Model |
+|-----|------|--------|-------------|
+| CC2650 | Cortex-M3 | ✅ Tested | `cc2650_core.json` |
+| STM32U575 | Cortex-M33 | ✅ Supported | `stm32u575_core.json` |
+
+### STM32U575 Parameters (Paper Table II)
+
+- **V_ret**: 1.8V (retention voltage)
+- **V_rated**: 3.3V (rated supply)
+- **I_active**: 19 µA/MHz
+- **I_leak**: 150 nA (Deep Sleep)
+- **C_bus**: 20.0 pF (parasitic bus capacitance)
+
+## Baseline Implementations
+
+Physics-grounded baselines for fair comparison:
+
+| Baseline | Description | Location |
+|----------|-------------|----------|
+| **Quetzal-BFSN** | SJF scheduling + reactive IBO | `evaluation/baselines/quetzal.py` |
+| **DINO-BFSN** | Volatility-adaptive checkpointing | `evaluation/baselines/dino.py` |
+| BATDMA | Energy-aware TDMA | `evaluation/baselines/batdma.py` |
+| Mementos | Checkpoint-based intermittent | `evaluation/baselines/mementos.py` |
+| Alpaca | Federated learning baseline | `evaluation/baselines/alpaca.py` |
+
+## Reproducibility
+
+### Reproduce Table V (Physical-Model Parity)
+
+```bash
+python evaluation/scripts/reproduce_table_v.py --nodes 50 --duration 1000
+```
+
+Outputs comparison of ECTC vs Quetzal-BFSN vs DINO-BFSN.
+
+### No-EDA Parameter Extraction
+
+Extract C_bus without SPICE/Cadence (Paper V-C.1):
+
+```bash
+python tools/fallback_cbus_identification.py --demo
+
+# From real measurements
+python tools/fallback_cbus_identification.py --leakage --idle-csv data.csv
+```
+
+## Documentation
+
+- [BHDF Schema](docs/BHDF_SCHEMA.md) - Battery-Free Hardware Description File format
+- [Architecture](docs/architecture.md) - System design overview
+- [Hardware Setup](docs/hardware_setup.md) - Testbed configuration
+- [API Reference](docs/api_reference.md) - Code documentation
+
 ## Performance
 
 Compared to state-of-the-art:
@@ -148,9 +237,10 @@ Compared to state-of-the-art:
 | Framework  | Data Integrity | Energy Cost (nJ/bit) | Sleep Ratio | P95 Latency (s) |
 |------------|----------------|----------------------|-------------|-----------------|
 | **ECTC**   | **93.2%**      | **45.7**             | **87.3%**   | **1.83**        |
+| Quetzal-BFSN | 82.1%        | 58.2                 | 78.5%       | 2.54            |
+| DINO-BFSN  | 79.8%          | 61.5                 | 75.2%       | 2.87            |
 | BATDMA     | 78.4%          | 62.3                 | 72.1%       | 3.21            |
 | Mementos   | 71.2%          | 78.9                 | 65.8%       | 4.56            |
-| Alpaca     | 68.9%          | 84.2                 | 61.2%       | 5.34            |
 
 *Table 1: Performance comparison on 50-node testbed (100-hour evaluation)*
 
@@ -205,8 +295,8 @@ Apache License 2.0 - See [LICENSE](LICENSE) for details.
 ## Contact
 
 - Project Lead: Your Name
-- Email: your.email@example.com
-- Issues: [GitHub Issues](https://github.com/your-org/ectc-project/issues)
+- Email: 745974903@qq.com
+
 
 ## Acknowledgments
 

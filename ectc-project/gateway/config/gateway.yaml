@@ -69,13 +69,14 @@ algorithms:
 
   # Stratified Shapley Values
   shapley:
+    # ENFORCE K=4 for physical deployment (fits in 12-byte BLE token)
+    num_strata: 4
     epsilon: 0.1    # Error bound (relative)
     delta: 0.05     # Confidence parameter
 
     sampling:
       min_samples: 10
       max_samples: 100
-      stratum_size: 8  # Nodes per stratum
 
     convergence:
       max_iterations: 100
