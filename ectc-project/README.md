@@ -290,11 +290,11 @@ python evaluation/scripts/reproduce_figure6.py
 ## Citation
 
 ```bibtex
-@inproceedings{zhang2024ectc,
+@inproceedings{zhang2025ectc,
   title={ECTC: A Game-Theoretic Framework for Energy-Communication-Computation Coupled Optimization in Battery-Free Sensor Networks},
   author={Zhang, Chong and Wang, Binxu and Chen, Yifei and Li, Ming and others},
-  booktitle={IEEE International Conference on Embedded and Real-Time Computing Systems and Applications (RTCSA)},
-  year={2024}
+  booktitle={IEEE Transaction on Mobile Computing},
+  year={2025}
 }
 ```
 
