@@ -101,7 +101,7 @@ python scripts/reproduce_table1.py
 
 - **tools/**: Parameter identification and calibration
   - `fallback_cbus_identification.py`: No-EDA C_bus extraction (Paper V-C.1)
-  - `energy_calibration.py`: Energy model calibration
+  - `energy_calibration.py`: FEMP 2.0 automated calibration pipeline (~90 min/MCU, one-time)
   - `bq25570_calculator.py`: PMIC configuration
 
 - **hardware/**: Hardware design files
@@ -126,12 +126,16 @@ This ensures bounded energy queues while incentivizing cooperation.
 
 ### 2. Stratified Shapley Values
 
-Efficient approximation with O(N log(1/δ)/ε²) complexity:
+Efficient approximation with O(N log(1/δ)/ε²) complexity.
+K=4 strata is enforced as a physical constraint (fits in 12-byte BLE token):
 
 ```python
+# K defaults to 4 for physical deployment alignment
 approximator = StratifiedShapleyApproximator(N=50)
 phi = approximator.approximate_shapley_values(game, positions)
 ```
+
+Operational bounds from 28-day deployment trace: worst-case inter-stratum ρ=0.14, approx error <3.7%.
 
 ### 3. TinyLSTM
 
@@ -149,13 +153,19 @@ Robust data recovery under energy scarcity:
 
 ### 5. FEMP 2.0 Energy Model
 
-Physics-grounded energy model with parasitic parameters (Paper Section V-C):
+Physics-grounded energy model with parasitic parameters (Paper Section V-C).
+Supports heterogeneous MCU profiles via factory methods:
 
 ```python
-from simulation.energy_model import FEMPEnergyModel, TaskType
+from simulation.energy_model import FEMPEnergyModel, FEMPParameters, TaskType
 
-model = FEMPEnergyModel()
-energy = model.predict_task_energy(TaskType.TRANSMIT, duration_ms=2.0)
+# CC2650 (default)
+model_cc = FEMPEnergyModel(params=FEMPParameters.for_cc2650())
+
+# STM32U575 (Paper Table II)
+model_stm = FEMPEnergyModel(params=FEMPParameters.for_stm32u575())
+
+energy = model_stm.predict_task_energy(TaskType.TRANSMIT, duration_ms=2.0)
 ```
 
 > **CRITICAL**: Ignoring C_bus (bus parasitic capacitance) causes **4.6× energy estimation error**.
@@ -294,7 +304,7 @@ Apache License 2.0 - See [LICENSE](LICENSE) for details.
 
 ## Contact
 
-- Project Lead: Wang Binxu
+- Project Lead: Your Name
 - Email: 745974903@qq.com
 
 
